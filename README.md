@@ -1,61 +1,55 @@
 # 🐾 Animal TD — Tower Defense
 
-Защищай Землю от волн врагов! Башня в центре автоматически стреляет, улучшения покупаются за золото, кристаллы за волны тратятся в магазине.
+Защищай Землю от волн врагов! Башня в центре автоматически стреляет.
+Улучшения покупаются за золото, кристаллы за волны тратятся в магазине.
+Доступно ускорение x2 и режим «Обнаглел» (враги ×10 HP, ×4 размер).
 
-## ▶️ Запуск через GitHub Pages
-
-Проект работает прямо в браузере:
+## ▶️ GitHub Pages
 
 ➡ **https://oddik90017.github.io/animal-td/**
 
 ## 💻 Локальный запуск
 
-Проект использует ES-модули (`import`/`export`), поэтому открытие `index.html` через `file://` **не сработает**. Нужен HTTP-сервер.
-
-### Вариант 1 — VS Code + Live Server
-
-1. Установи расширение **Live Server** (Ritwick Dey)
-2. Открой папку проекта в VS Code
-3. Правый клик на `index.html` → **Open with Live Server**
-
-### Вариант 2 — Python
+Проект использует ES-модули — нужен HTTP-сервер (открытие `index.html` через `file://` не сработает).
 
 ```bash
+# Python
 python -m http.server 8080
-# Открой http://localhost:8080
-```
 
-### Вариант 3 — Node.js
-
-```bash
+# Node.js
 npx serve .
-# Открой http://localhost:3000
 ```
+
+Или открой папку в VS Code → ПКМ на `index.html` → **Open with Live Server**.
 
 ## 🎮 Управление
 
-| Действие | Клавиша |
+| Клавиша | Действие |
 |---|---|
-| Купить скорость атаки | **Q** |
-| Купить урон | **W** |
-| Купить взрывчатку | **1** |
-| Купить яд | **2** |
-| Купить рикошет | **3** |
-| Рестарт / Выйти в меню | **R** |
+| **Q** | Купить скорость атаки |
+| **W** | Купить урон |
+| **1** | Купить взрывчатку |
+| **2** | Купить яд |
+| **3** | Купить рикошет |
+| **R** | Рестарт / Выйти в меню |
 
-Кнопка **⏩** в правом верхнем углу — ускорение x2 (после подтверждения).
+Кнопка **⏩** (правый верхний угол) — ускорение x2.
+В диалоге **«Обнаглел»** — враги получают ×10 HP и ×4 размер до конца попытки.
 
 ## 🛠 Структура
 
 ```
-index.html          — точка входа
+index.html              — точка входа
 src/
-  evilTowerGame.js  — основная логика и рендер
-  entities/         — Tower, Enemy, Projectile
-  systems/          — combat, upgrade, animation
-  data/             — assetManifest, waves
-  engine/           — gameState
-  ui/               — controls
-asets/              — спрайты и графика
-styles.css          — стили
+  evilTowerGame.js      — основная логика и рендер
+  entities/tower.js     — башня (стрельба, урон)
+  entities/enemy.js     — враги (HP, poison, смерть)
+  entities/projectile.js — снаряды
+  systems/combatSystem.js — взрыв, яд, ricochet
+  systems/upgradeSystem.js — улучшения и цены
+  systems/animationSystem.js — анимации врагов
+  data/assetManifest.js — пути к спрайтам
+  data/waves.js         — волны и статы врагов
+asets/                  — спрайты (Kenney Asset Pack)
+styles.css              — стили
 ```
