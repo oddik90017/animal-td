@@ -69,7 +69,6 @@ export function runEvilTowerGame(canvas, ctx) {
   const menuButtons = [
     { id: "play", label: "Играть", x: 470, y: 240, w: 260, h: 70, fill: "#d4a741" },
     { id: "shop", label: "Магазин", x: 470, y: 330, w: 260, h: 70, fill: "#3fa38f" },
-    { id: "exit", label: "Выйти", x: 470, y: 420, w: 260, h: 70, fill: "#cc4343" },
   ];
 
   const shopItems = [
@@ -698,13 +697,6 @@ export function runEvilTowerGame(canvas, ctx) {
     if (hit.id === "shop") {
       game.scene = "shop";
       return;
-    }
-    if (hit.id === "exit") {
-      window.close();
-      setTimeout(() => {
-        game.uiNotice = "Браузер заблокировал закрытие вкладки. Закройте ее вручную.";
-        game.uiNoticeT = 2.5;
-      }, 80);
     }
   }
 
