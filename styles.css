@@ -1,0 +1,34 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #060912;
+  color: #d8e0ff;
+}
+
+.app-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+#gameCanvas {
+  border: 2px solid #334577;
+  border-radius: 8px;
+  display: block;
+  background: #101930;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: #aab8e8;
+  font-size: 14px;
+}
