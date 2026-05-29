@@ -259,7 +259,17 @@ export function runEvilTowerGame(canvas, ctx) {
         game.baseHp -= enemy.damage;
         game.effects.push({ x: enemy.x, y: enemy.y, frames: game.effectsExplosion, size: enemy.radius * 3, t: 0.35, maxT: 0.35 });
         enemy.reachedBase = false;
-        enemy.deathFadeT = 0;
+        if (enemy.isBoss) {
+          const dx = enemy.x - game.centerX;
+          const dy = enemy.y - game.centerY;
+          const dist = Math.hypot(dx, dy) || 1;
+          const knockDist = 180;
+          enemy.knockbackVx = (dx / dist) * knockDist / 0.4;
+          enemy.knockbackVy = (dy / dist) * knockDist / 0.4;
+          enemy.knockbackT = 0.4;
+        } else {
+          enemy.deathFadeT = 0;
+        }
       } else if (!enemy.alive && !enemy.deathEffectPlayed) {
         enemy.deathEffectPlayed = true;
         game.effects.push({ x: enemy.x, y: enemy.y, frames: game.effectsPuff, size: enemy.radius * 2, t: 0.3, maxT: 0.3 });

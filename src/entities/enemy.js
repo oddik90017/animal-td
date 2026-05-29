@@ -31,6 +31,9 @@ export class Enemy {
     this.deathFadeT = 0;
     this.deathEffectPlayed = false;
     this.poisonTicks = [];
+    this.knockbackVx = 0;
+    this.knockbackVy = 0;
+    this.knockbackT = 0;
   }
 
   applyDamage(amount) {
@@ -75,12 +78,21 @@ export class Enemy {
       }
     }
 
+    if (this.knockbackT > 0) {
+      this.x += this.knockbackVx * delta;
+      this.y += this.knockbackVy * delta;
+      this.knockbackT -= delta;
+      return;
+    }
+
     const dx = targetX - this.x;
     const dy = targetY - this.y;
     const dist = Math.hypot(dx, dy);
     if (dist <= targetRadius + this.radius * 0.52) {
       this.reachedBase = true;
-      this.alive = false;
+      if (!this.isBoss) {
+        this.alive = false;
+      }
       return;
     }
 
