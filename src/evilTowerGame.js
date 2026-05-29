@@ -39,6 +39,7 @@ export function runEvilTowerGame(canvas, ctx) {
     speedActive: false,
     showSpeedDialog: false,
     insultMode: false,
+    goldMultiplier: 1,
   };
 
   function saveToDisk() {
@@ -72,13 +73,13 @@ export function runEvilTowerGame(canvas, ctx) {
   ];
 
   const shopItems = [
-    { id: "extraGold", label: "+50 золота на старте", cost: 5, max: 5 },
-    { id: "attackSpeed", label: "+1 ур. скорости атаки", cost: 8, max: 3 },
-    { id: "damage", label: "+1 ур. урона", cost: 8, max: 3 },
-    { id: "explosive", label: "Взрывчатка на старте", cost: 15, max: 1 },
-    { id: "poison", label: "Яд на старте", cost: 15, max: 1 },
-    { id: "ricochet", label: "Рикошет на старте", cost: 15, max: 1 },
-    { id: "lifesteal", label: "Вампиризм на старте", cost: 15, max: 1 },
+    { id: "extraGold", label: "+50 золота на старте", cost: 5, max: 10 },
+    { id: "attackSpeed", label: "+1 ур. скорости атаки", cost: 8, max: 10 },
+    { id: "damage", label: "+1 ур. урона", cost: 8, max: 10 },
+    { id: "explosive", label: "Взрывчатка на старте", cost: 15, max: 10 },
+    { id: "poison", label: "Яд на старте", cost: 15, max: 10 },
+    { id: "ricochet", label: "Рикошет на старте", cost: 15, max: 10 },
+    { id: "lifesteal", label: "Вампиризм на старте", cost: 15, max: 10 },
   ];
 
   const upgradeButtons = [
@@ -168,25 +169,17 @@ export function runEvilTowerGame(canvas, ctx) {
     game.gameOver = false;
     game.win = false;
     game.uiNotice = "";
+    game.goldMultiplier = 1;
     // Применяем покупки из магазина
     game.gold += game.shopUpgrades.extraGold * 50;
     game.upgrades.attackSpeedLevel += game.shopUpgrades.attackSpeed;
     game.upgrades.damageLevel += game.shopUpgrades.damage;
-    if (game.shopUpgrades.explosive) {
-      game.upgrades.evolutionLevel.explosive = 1;
-      game.upgrades.projectileTypes.explosive = true;
-    }
-    if (game.shopUpgrades.poison) {
-      game.upgrades.evolutionLevel.poison = 1;
-      game.upgrades.projectileTypes.poison = true;
-    }
-    if (game.shopUpgrades.ricochet) {
-      game.upgrades.evolutionLevel.ricochet = 1;
-      game.upgrades.projectileTypes.ricochet = true;
-    }
-    if (game.shopUpgrades.lifesteal) {
-      game.upgrades.evolutionLevel.lifesteal = 1;
-      game.upgrades.projectileTypes.lifesteal = true;
+    for (const type of ["explosive", "poison", "ricochet", "lifesteal"]) {
+      const level = Number(game.shopUpgrades[type]) || 0;
+      if (level > 0) {
+        game.upgrades.evolutionLevel[type] = level;
+        game.upgrades.projectileTypes[type] = true;
+      }
     }
     game.centerTower = new Tower(game.centerX, game.centerY);
     game.centerTower.range = 380;
@@ -229,7 +222,7 @@ export function runEvilTowerGame(canvas, ctx) {
     }
 
     game.gold += game.incomePerWave + Math.round(12 * Math.pow(1.1, game.currentWaveIndex));
-    game.waveCurrency += 3 + Math.floor(game.currentWaveIndex / 3);
+    game.waveCurrency += 2 + Math.floor(game.currentWaveIndex / 10);
     saveToDisk();
     game.waveSpawned = 0;
     game.waveSpawnTimer = 0.3;
@@ -297,7 +290,8 @@ export function runEvilTowerGame(canvas, ctx) {
 
     for (const enemy of game.enemies) {
       if (!enemy.alive && enemy.deathFadeT > 0.34) {
-        game.gold += enemy.reward * 2;
+        if (enemy.isBoss) game.goldMultiplier = 5;
+        game.gold += enemy.reward * 2 * game.goldMultiplier;
         enemy.deathFadeT = 0.339;
       }
     }
@@ -584,13 +578,18 @@ export function runEvilTowerGame(canvas, ctx) {
     ctx.fillRect(10, 10, 560, 110);
     ctx.fillStyle = "#deebff";
     ctx.font = "18px Arial";
-    const waveText = game.currentWaveIndex < game.waves.length ? `${game.currentWaveIndex + 1}/20` : "20/20";
+    const totalWaves = game.waves.length;
+    const waveText = game.currentWaveIndex < totalWaves ? `${game.currentWaveIndex + 1}/${totalWaves}` : `${totalWaves}/${totalWaves}`;
     ctx.fillText(`Wave: ${waveText}`, 22, 34);
     ctx.fillText(`Base HP: ${Math.max(game.baseHp, 0)}`, 22, 58);
     ctx.fillText(`Gold: ${Math.floor(game.gold)}`, 22, 82);
     const activeTypes = Object.keys(game.upgrades.projectileTypes).filter((t) => game.upgrades.projectileTypes[t]);
     ctx.fillText(`Projectile: ${activeTypes.length > 0 ? activeTypes.join("+") : "normal"}`, 210, 34);
     ctx.fillText(`Enemies: ${game.enemies.filter((e) => e.alive).length}`, 210, 58);
+    if (game.goldMultiplier > 1) {
+      ctx.fillStyle = "#ffd700";
+      ctx.fillText(`Gold x${game.goldMultiplier}`, 210, 82);
+    }
 
     if (game.waveAnnounceT > 0) {
       ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
