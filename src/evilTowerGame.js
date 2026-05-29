@@ -34,7 +34,7 @@ export function runEvilTowerGame(canvas, ctx) {
     uiNoticeT: 0,
     hoveredButton: null,
     waveCurrency: 0,
-    shopUpgrades: { extraGold: 0, attackSpeed: 0, damage: 0, explosive: false, poison: false, ricochet: false },
+    shopUpgrades: { extraGold: 0, attackSpeed: 0, damage: 0, explosive: false, poison: false, ricochet: false, lifesteal: false },
     speedUnlocked: false,
     speedActive: false,
     showSpeedDialog: false,
@@ -78,14 +78,16 @@ export function runEvilTowerGame(canvas, ctx) {
     { id: "explosive", label: "Взрывчатка на старте", cost: 15, max: 1 },
     { id: "poison", label: "Яд на старте", cost: 15, max: 1 },
     { id: "ricochet", label: "Рикошет на старте", cost: 15, max: 1 },
+    { id: "lifesteal", label: "Вампиризм на старте", cost: 15, max: 1 },
   ];
 
   const upgradeButtons = [
-    { id: "attackSpeed", label: "ASPD", x: 80, y: 620, w: 180, h: 60 },
-    { id: "damage", label: "DMG", x: 280, y: 620, w: 180, h: 60 },
-    { id: "explosive", label: "Explosive", x: 500, y: 620, w: 180, h: 60 },
-    { id: "poison", label: "Poison", x: 700, y: 620, w: 180, h: 60 },
-    { id: "ricochet", label: "Ricochet", x: 920, y: 620, w: 180, h: 60 },
+    { id: "attackSpeed", label: "ASPD", x: 50,  y: 612, w: 170, h: 44 },
+    { id: "damage",      label: "DMG",  x: 230, y: 612, w: 170, h: 44 },
+    { id: "explosive",   label: "Explosive", x: 410, y: 612, w: 170, h: 44 },
+    { id: "poison",      label: "Poison",    x: 590, y: 612, w: 170, h: 44 },
+    { id: "ricochet",    label: "Ricochet",  x: 770, y: 612, w: 170, h: 44 },
+    { id: "lifesteal",   label: "Lifesteal", x: 950, y: 612, w: 170, h: 44 },
   ];
 
   function getMousePos(event) {
@@ -182,6 +184,10 @@ export function runEvilTowerGame(canvas, ctx) {
       game.upgrades.evolutionLevel.ricochet = 1;
       game.upgrades.projectileTypes.ricochet = true;
     }
+    if (game.shopUpgrades.lifesteal) {
+      game.upgrades.evolutionLevel.lifesteal = 1;
+      game.upgrades.projectileTypes.lifesteal = true;
+    }
     game.centerTower = new Tower(game.centerX, game.centerY);
     game.centerTower.range = 380;
   }
@@ -251,11 +257,12 @@ export function runEvilTowerGame(canvas, ctx) {
       enemy.update(delta, game.centerX, game.centerY, game.coreRadius);
       if (enemy.reachedBase) {
         game.baseHp -= enemy.damage;
-        game.effects.push({ x: enemy.x, y: enemy.y, r: enemy.radius * 2.5, t: 0.35, maxT: 0.35, grow: true, color: "rgba(255,80,30,0.7)" });
+        game.effects.push({ x: enemy.x, y: enemy.y, frames: game.effectsExplosion, size: enemy.radius * 3, t: 0.35, maxT: 0.35 });
         enemy.reachedBase = false;
         enemy.deathFadeT = 0;
       } else if (!enemy.alive && !enemy.deathEffectPlayed) {
         enemy.deathEffectPlayed = true;
+        game.effects.push({ x: enemy.x, y: enemy.y, frames: game.effectsPuff, size: enemy.radius * 2, t: 0.3, maxT: 0.3 });
       }
     }
 
@@ -272,7 +279,7 @@ export function runEvilTowerGame(canvas, ctx) {
     for (const projectile of game.projectiles) {
       const result = projectile.update(delta, game.enemies);
       if (!result?.hit) continue;
-      resolveProjectileHit(projectile, result.enemy, game.enemies, game.effects);
+      resolveProjectileHit(projectile, result.enemy, game.enemies, game.effects, game);
       if (projectile.type.includes("ricochet") && projectile.retargetAfterBounce(result.enemy, game.enemies)) continue;
       projectile.alive = false;
     }
@@ -509,13 +516,24 @@ export function runEvilTowerGame(canvas, ctx) {
     }
 
     for (const effect of game.effects) {
-      ctx.fillStyle = effect.color;
-      ctx.beginPath();
-      const maxT = effect.maxT || 0.25;
-      const progress = effect.t / maxT;
-      const scale = effect.grow ? (1 - progress) : progress;
-      ctx.arc(effect.x, effect.y, effect.r * Math.max(0, scale), 0, Math.PI * 2);
-      ctx.fill();
+      if (effect.frames && effect.frames.length > 0) {
+        const progress = 1 - effect.t / effect.maxT;
+        const idx = Math.min(Math.floor(progress * effect.frames.length), effect.frames.length - 1);
+        const img = effect.frames[idx];
+        if (img) {
+          const s = effect.size || 60;
+          ctx.globalAlpha = Math.min(1, (effect.t / effect.maxT) * 2);
+          ctx.drawImage(img, effect.x - s / 2, effect.y - s / 2, s, s);
+          ctx.globalAlpha = 1;
+        }
+      } else {
+        ctx.fillStyle = effect.color;
+        ctx.beginPath();
+        const maxT = effect.maxT || 0.25;
+        const scale = effect.grow ? (1 - effect.t / maxT) : (effect.t / maxT);
+        ctx.arc(effect.x, effect.y, effect.r * Math.max(0, scale), 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -539,14 +557,14 @@ export function runEvilTowerGame(canvas, ctx) {
       }
 
       ctx.fillStyle = "#e7eeff";
-      ctx.font = "bold 18px Arial";
-      ctx.fillText(button.label, button.x + 12, button.y + 25);
-      ctx.font = "14px Arial";
-      ctx.fillText(`Цена: ${cost}`, button.x + 12, button.y + 46);
-      if (button.id === "attackSpeed") ctx.fillText(`Lvl ${game.upgrades.attackSpeedLevel}`, button.x + 108, button.y + 46);
-      if (button.id === "damage") ctx.fillText(`Lvl ${game.upgrades.damageLevel}`, button.x + 108, button.y + 46);
-      if (["explosive", "poison", "ricochet"].includes(button.id)) {
-        ctx.fillText(`Lvl ${game.upgrades.evolutionLevel[button.id]}`, button.x + 108, button.y + 46);
+      ctx.font = "bold 14px Arial";
+      ctx.fillText(button.label, button.x + 8, button.y + 19);
+      ctx.font = "12px Arial";
+      ctx.fillText(`Цена: ${cost}`, button.x + 8, button.y + 36);
+      if (button.id === "attackSpeed") ctx.fillText(`Lv${game.upgrades.attackSpeedLevel}`, button.x + 125, button.y + 36);
+      if (button.id === "damage") ctx.fillText(`Lv${game.upgrades.damageLevel}`, button.x + 125, button.y + 36);
+      if (["explosive", "poison", "ricochet", "lifesteal"].includes(button.id)) {
+        ctx.fillText(`Lv${game.upgrades.evolutionLevel[button.id]}`, button.x + 125, button.y + 36);
       }
     }
   }
@@ -846,6 +864,7 @@ export function runEvilTowerGame(canvas, ctx) {
     else if (event.key === "1") tryBuy("explosive");
     else if (event.key === "2") tryBuy("poison");
     else if (event.key === "3") tryBuy("ricochet");
+    else if (event.key === "4") tryBuy("lifesteal");
   });
 
   function loop(timestamp) {
@@ -863,6 +882,9 @@ export function runEvilTowerGame(canvas, ctx) {
 
   loadAssetBundle().then((bundle) => {
     game.assets = bundle;
+    game.effectsExplosion = bundle.frameAnimations.explosion || [];
+    game.effectsFlash = bundle.frameAnimations.flash || [];
+    game.effectsPuff = bundle.frameAnimations.puff || [];
     requestAnimationFrame(loop);
   });
 }

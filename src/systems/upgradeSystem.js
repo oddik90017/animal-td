@@ -4,13 +4,14 @@ const priceConfig = {
   explosive: { base: 90, ratio: 1.9 },
   poison: { base: 100, ratio: 2.02 },
   ricochet: { base: 120, ratio: 2.15 },
+  lifesteal: { base: 110, ratio: 2.1 },
 };
 
 export function buildUpgradeState() {
   return {
     attackSpeedLevel: 0,
     damageLevel: 0,
-    evolutionLevel: { explosive: 0, poison: 0, ricochet: 0 },
+    evolutionLevel: { explosive: 0, poison: 0, ricochet: 0, lifesteal: 0 },
     projectileTypes: {},
   };
 }

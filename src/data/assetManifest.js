@@ -57,6 +57,11 @@ export const assetManifest = {
     `${baseAssetsPath}/4/SpaceBackground/BackgroundGenerator/stars.png`,
   ],
   towers: [`${baseAssetsPath}/5/Planets/planet03.png`],
+  effects: {
+    explosion: Array.from({ length: 9 }, (_, i) => `${baseAssetsPath}/effects/explosion/explosion0${i}.png`),
+    flash: Array.from({ length: 9 }, (_, i) => `${baseAssetsPath}/effects/flash/flash0${i}.png`),
+    puff: Array.from({ length: 25 }, (_, i) => `${baseAssetsPath}/effects/puff/whitePuff${String(i).padStart(2, "0")}.png`),
+  },
 };
 
 async function tryLoadImage(path) {
@@ -71,27 +76,37 @@ async function tryLoadImage(path) {
 export async function loadAssetBundle() {
   const imageEntries = [];
 
+  const allEffectPaths = Object.values(assetManifest.effects).flat();
   const projectileLoads = await Promise.all(assetManifest.projectileVariants.map(tryLoadImage));
   const enemyLoads = await Promise.all(assetManifest.enemies.map(tryLoadImage));
   const enemyPngLoads = await Promise.all(assetManifest.enemyPng.map(tryLoadImage));
   const backgroundLoads = await Promise.all(assetManifest.backgrounds.map(tryLoadImage));
   const towerLoads = await Promise.all(assetManifest.towers.map(tryLoadImage));
+  const effectLoads = await Promise.all(allEffectPaths.map(tryLoadImage));
 
   imageEntries.push(...projectileLoads.filter((x) => x.ok).map((x) => ({ key: x.path, image: x.image })));
   imageEntries.push(...enemyLoads.filter((x) => x.ok).map((x) => ({ key: x.path, image: x.image })));
   imageEntries.push(...enemyPngLoads.filter((x) => x.ok).map((x) => ({ key: x.path, image: x.image })));
   imageEntries.push(...backgroundLoads.filter((x) => x.ok).map((x) => ({ key: x.path, image: x.image })));
   imageEntries.push(...towerLoads.filter((x) => x.ok).map((x) => ({ key: x.path, image: x.image })));
+  imageEntries.push(...effectLoads.filter((x) => x.ok).map((x) => ({ key: x.path, image: x.image })));
 
   const imageMap = new Map(imageEntries.map((entry) => [entry.key, entry.image]));
+  const frameAnimations = {};
+  for (const [key, paths] of Object.entries(assetManifest.effects)) {
+    frameAnimations[key] = paths.map((p) => imageMap.get(p)).filter(Boolean);
+  }
+
   return {
     imageMap,
+    frameAnimations,
     loadedCount: imageMap.size,
     totalDeclared:
       assetManifest.projectileVariants.length +
       assetManifest.enemies.length +
       assetManifest.enemyPng.length +
       assetManifest.backgrounds.length +
-      assetManifest.towers.length,
+      assetManifest.towers.length +
+      allEffectPaths.length,
   };
 }

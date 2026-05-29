@@ -31,6 +31,7 @@ npx serve .
 | **1** | Купить взрывчатку |
 | **2** | Купить яд |
 | **3** | Купить рикошет |
+| **4** | Купить вампиризм |
 | **R** | Рестарт / Выйти в меню |
 
 Кнопка **⏩** (правый верхний угол) — ускорение x2.
@@ -45,7 +46,7 @@ src/
   entities/tower.js     — башня (стрельба, урон)
   entities/enemy.js     — враги (HP, poison, смерть)
   entities/projectile.js — снаряды
-  systems/combatSystem.js — взрыв, яд, ricochet
+  systems/combatSystem.js — взрыв, яд, рикошет, вампиризм
   systems/upgradeSystem.js — улучшения и цены
   systems/animationSystem.js — анимации врагов
   data/assetManifest.js — пути к спрайтам
